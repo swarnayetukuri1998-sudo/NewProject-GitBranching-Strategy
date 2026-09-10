@@ -1,0 +1,38 @@
+pipeline {
+    agent any
+    tools {
+        maven 'MyMaven'
+    }
+    stages {
+        stage('Code') {
+            steps {
+                git branch: 'main', url: 'https://github.com/swarnayetukuri1998-sudo/NewProject-GitBranching-Strategy.git'
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        stage('Test') {
+            steps {
+                echo 'Running tests.........'
+            }
+        }
+        stage('Artifact') {
+            steps {
+                nexusArtifactUploader artifacts: [[artifactId: 'myweb', classifier: '', file: 'target/myweb-8.8.2.war', type: 'war']], credentialsId: 'e-com', groupId: 'in.javahome', nexusUrl: '15.207.248.58:8081', nexusVersion: 'nexus3', protocol: 'http', repository: 'e-commercerepo', version: '8.8.2'
+            }
+        }
+        stage('Approval') {
+            steps {
+                input message: 'Approve deployment to prod?, Ok: deploy'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                deploy adapters: [tomcat9(alternativeDeploymentContext: '', credentialsId: 'e-commerce', path: '', url: 'http://13.235.86.2:8080/')], contextPath: 'E-Commerce', war: 'target/*.war'
+            }
+        }
+    }
+}
